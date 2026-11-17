@@ -21,6 +21,8 @@ namespace Serializacja.EditorTools
             new SceneDef("10_JsonUtility_ograniczenia", S10_JsonLimits),
             new SceneDef("11_Zapis_binarny_Wersje", S11_Binary),
             new SceneDef("12_Bezpieczny_zapis_Sloty", S12_Secure),
+            new SceneDef("13_PlayerPrefs_Ustawienia", S13_PlayerPrefs),
+            new SceneDef("14_PlayerPrefs_Rekordy_JSON", S14_HighScores),
         };
 
         // =====================================================================
@@ -542,6 +544,87 @@ namespace Serializacja.EditorTools
             demo.slotMarkers = markers;
             demo.activeMaterial = M_Green;
             demo.idleMaterial = M_Gray;
+        }
+
+        // =====================================================================
+        // 13 – PlayerPrefs – USTAWIENIA
+        // =====================================================================
+        static void S13_PlayerPrefs()
+        {
+            Begin("13 · PlayerPrefs – ustawienia gracza",
+                "<b>PlayerPrefs</b> – prosty magazyn par <b>klucz → wartość</b> trzymany przez Unity poza plikami gry " +
+                "(Windows: rejestr, macOS: plik .plist, Android: SharedPreferences, WebGL: IndexedDB).\n\n" +
+                "• tylko trzy typy: <b>SetInt / SetFloat / SetString</b> – bool, enum i kolor trzeba zamienić (1/0, numer, \"#RRGGBB\"),\n" +
+                "• <b>Get…(klucz, wartośćDomyślna)</b> – brak klucza nie jest błędem,\n" +
+                "• <b>HasKey</b>, <b>DeleteKey</b>, <b>DeleteAll</b>,\n" +
+                "• <b>Save()</b> – zapis na dysk teraz; bez niego Unity zapisuje przy zamykaniu aplikacji " +
+                "(awaria gry = utrata zmian).\n\n" +
+                "Licznik wejść do sceny rośnie przy każdym jej wczytaniu – przytrzymaj E albo uruchom grę ponownie: " +
+                "wartości zostają. Klucze mają prefiks sceny (s13.) i są stałymi w kodzie.\n\n" +
+                "Nie trzymaj tu zapisu gry ani danych ważnych: PlayerPrefs nie są szyfrowane.",
+                "<b>A / D</b> – ustawienie   <b>W / S</b> – wartość   <b>Spacja</b> – Save()   <b>LPM</b> – wczytaj   <b>PPM</b> – usuń klucze",
+                "", statusWidth: 660f);
+            Floor();
+            Cam(new Vector3(0f, 3.4f, -8f), new Vector3(0f, 1f, 0.5f));
+            var light = Object.FindFirstObjectByType<Light>();
+            var hero = Prim(PrimitiveType.Capsule, "Postac", new Vector3(0f, 1f, 0f), Vector3.one, M_White);
+            var nameLabel = Label(hero, "Gracz", 1.3f, 18);
+            var speaker = Prim(PrimitiveType.Cylinder, "Glosnik", new Vector3(-2.5f, 0.4f, 0.5f), new Vector3(1.4f, 0.4f, 1.4f), M_Dark);
+            Label(speaker, "głośność", 0.9f, 13);
+            var hints = new System.Collections.Generic.List<GameObject>();
+            for (int i = 0; i < 2; i++)
+            {
+                var h = Box("Podpowiedz_" + (i + 1), new Vector3(i == 0 ? -1.6f : 1.6f, 2.4f, 1f), new Vector3(1.1f, 0.5f, 0.05f), M_Yellow);
+                Label(h, i == 0 ? "podpowiedź: W/S" : "podpowiedź: A/D", 0.4f, 12);
+                hints.Add(h);
+            }
+            var enemies = new System.Collections.Generic.List<GameObject>();
+            for (int i = 0; i < 5; i++)
+            {
+                var e = Ball("Przeciwnik_" + (i + 1), new Vector3(2.2f + (i % 3) * 0.9f, 0.35f, 1.2f + (i / 3) * 1f), 0.7f, M_Red);
+                enemies.Add(e);
+            }
+            SectionLabel("przeciwnicy = trudność", new Vector3(3.1f, 0.05f, 0.4f), null, 13);
+            var demo = Manager<PlayerPrefsSettingsDemo>();
+            demo.character = hero.GetComponent<Renderer>();
+            demo.sceneLight = light;
+            demo.speaker = speaker.transform;
+            demo.hints = hints.ToArray();
+            demo.enemies = enemies.ToArray();
+            demo.nameLabel = nameLabel;
+        }
+
+        // =====================================================================
+        // 14 – PlayerPrefs – OBIEKT JSON I MIGRACJA
+        // =====================================================================
+        static void S14_HighScores()
+        {
+            Begin("14 · PlayerPrefs – tabela rekordów jako JSON",
+                "Obiekt złożony (lista rekordów) można trzymać w <b>jednym kluczu</b> PlayerPrefs jako tekst JSON:\n" +
+                "<b>SetString(klucz, JsonUtility.ToJson(tabela))</b> i <b>JsonUtility.FromJson<T>(GetString(klucz))</b>.\n\n" +
+                "• pole <b>version</b> w obiekcie pozwala rozpoznać stary format,\n" +
+                "• <b>migracja</b>: LPM zapisuje tabelę tak, jak robiła to „stara wersja gry” – w osobnych kluczach " +
+                "(s14.v1.nick0, s14.v1.score0…). Przy odczycie dane są przenoszone do nowego formatu, a stare klucze usuwane,\n" +
+                "• uszkodzony JSON → wartości domyślne zamiast wyjątku.\n\n" +
+                "Kiedy PlayerPrefs, a kiedy plik (sceny 09–12)? PlayerPrefs – małe dane: ustawienia, rekordy lokalne, " +
+                "flagi („samouczek ukończony”). Plik – zapis stanu gry, duże dane, sloty, kopie zapasowe. " +
+                "W WebGL PlayerPrefs mają limit 1 MB.",
+                "<b>Spacja</b> – zagraj rundę   <b>LPM</b> – dane w starym formacie v1 + migracja   <b>PPM</b> – wyczyść tabelę",
+                "", statusWidth: 660f);
+            Floor();
+            Cam(new Vector3(0f, 3.6f, -9f), new Vector3(0f, 1.5f, 0f));
+            var podium = Group("Tabela");
+            var bars = new Transform[5];
+            var labels = new WorldLabel[5];
+            for (int i = 0; i < 5; i++)
+            {
+                var b = Box("Wynik_" + (i + 1), new Vector3(-3.2f + i * 1.6f, 0.05f, 0f), new Vector3(1.1f, 0.1f, 1.1f), Palette[i], podium);
+                bars[i] = b.transform;
+                labels[i] = Label(b, (i + 1) + ".", 0.3f, 15);
+            }
+            var demo = Manager<HighScoresDemo>();
+            demo.bars = bars;
+            demo.barLabels = labels;
         }
     }
 }

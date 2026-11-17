@@ -1,8 +1,8 @@
 # Serializacja w Unity – sceny demonstracyjne
 
-Projekt Unity **6.3 LTS (6000.3.24f1)** do wykładu 6 „Serializacja i animacja w Unity”. Pokazuje, **co i jak zapisuje serializator Unity** (reguły pól, klasy `[Serializable]`, `[SerializeReference]`, `ISerializationCallbackReceiver`), **ScriptableObject** (dane i kanały zdarzeń), **Instantiate** jako kopię przez serializację, **format YAML** plików projektu oraz **zapis stanu gry** (JsonUtility i jego ograniczenia, format binarny, wersjonowanie, sloty, zapis atomowy, suma kontrolna).
+Projekt Unity **6.3 LTS (6000.3.24f1)** do wykładu 6 „Serializacja i animacja w Unity”. Pokazuje, **co i jak zapisuje serializator Unity** (reguły pól, klasy `[Serializable]`, `[SerializeReference]`, `ISerializationCallbackReceiver`), **ScriptableObject** (dane i kanały zdarzeń), **Instantiate** jako kopię przez serializację, **format YAML** plików projektu oraz **zapis stanu gry** (JsonUtility i jego ograniczenia, format binarny, wersjonowanie, sloty, zapis atomowy, suma kontrolna) oraz **PlayerPrefs** (ustawienia, obiekt JSON w kluczu, migracja formatu).
 
-Każde zagadnienie ma **osobną scenę** (`01_…` – `12_…`). W każdej scenie jest panel z opisem po polsku (lewy górny róg), panel stanu z wartościami na żywo i dziennikiem zdarzeń (prawy górny róg) oraz pasek ze sterowaniem (dół ekranu).
+Każde zagadnienie ma **osobną scenę** (`01_…` – `14_…`). W każdej scenie jest panel z opisem po polsku (lewy górny róg), panel stanu z wartościami na żywo i dziennikiem zdarzeń (prawy górny róg) oraz pasek ze sterowaniem (dół ekranu).
 
 - Render pipeline: **URP** (ustawienia z szablonu „Universal 3D”)
 - Pakiety: **Input System**, **uGUI** – bez dodatkowych pakietów
@@ -14,7 +14,7 @@ Każde zagadnienie ma **osobną scenę** (`01_…` – `12_…`). W każdej scen
 ## 1. Szybki start
 
 1. Otwórz projekt w Unity Hub (wersja **6000.3.24f1**) albo uruchom `Narzedzia/Otworz_projekt_w_Unity.bat`. Przy pierwszym otwarciu Unity pobierze pakiety.
-2. Sceny są **generowane kodem**. Przy pierwszym otwarciu pojawi się pytanie „Wygenerować teraz 12 scen?” – wybierz **Generuj**. Można to zrobić także później: menu **Serializacja → Generuj wszystkie sceny**.
+2. Sceny są **generowane kodem**. Przy pierwszym otwarciu pojawi się pytanie „Wygenerować teraz 14 scen?” – wybierz **Generuj**. Można to zrobić także później: menu **Serializacja → Generuj wszystkie sceny**.
 3. **Serializacja → Otwórz pierwszą scenę i uruchom Play**.
 4. Klawiszami **1 / 2** przechodzisz do poprzedniej / następnej sceny.
 
@@ -30,7 +30,7 @@ Każde zagadnienie ma **osobną scenę** (`01_…` – `12_…`). W każdej scen
 
 | Polecenie | Działanie |
 |---|---|
-| **Generuj wszystkie sceny** | Tworzy zasoby (EnemyType, Alarm, ZdrowieGracza, prefab, pliki YAML) i 12 scen, ustawia Build Settings |
+| **Generuj wszystkie sceny** | Tworzy zasoby (EnemyType, Alarm, ZdrowieGracza, prefab, pliki YAML) i 14 scen, ustawia Build Settings |
 | **Panel scen** | Okno z listą scen: *Otwórz*, ▶ (otwórz i Play), ↻ (wygeneruj tylko tę scenę) |
 | **Otwórz pierwszą scenę i uruchom Play** | Skrót do pokazu |
 | **Zbuduj wersję Windows (x64)** | Build do `Builds/Windows/SerializacjaDemo.exe` |
@@ -48,7 +48,7 @@ Każde zagadnienie ma **osobną scenę** (`01_…` – `12_…`). W każdej scen
 | **Spacja** | Player/Jump | akcja główna sceny |
 | **LPM** | Player/Attack | akcja dodatkowa |
 | **PPM** | UI/RightClick | trzecia akcja |
-| **WASD / strzałki** | Player/Move | ruch gracza (scena 09), wybór slotu A/D (scena 12) |
+| **WASD / strzałki** | Player/Move | ruch gracza (scena 09), wybór slotu A/D (scena 12), wybór i zmiana ustawień (scena 13) |
 | **C** | Player/Crouch | pokaż / ukryj panel opisu |
 | **przytrzymaj E** | Player/Interact (Hold) | reset sceny |
 | **1 / 2** | Player/Previous / Player/Next | poprzednia / następna scena |
@@ -72,7 +72,10 @@ Każde zagadnienie ma **osobną scenę** (`01_…` – `12_…`). W każdej scen
 | **10_JsonUtility_ograniczenia** | ograniczenia JsonUtility i obejścia: słownik → lista par, tablica jako korzeń → `Wrapper<T>`, właściwości → `[field: SerializeField]`, polimorfizm → `[SerializeReference]`, null → flaga | następny przypadek | odczyt (FromJson) | – |
 | **11_Zapis_binarny_Wersje** | `BinaryWriter`/`BinaryReader`, magiczna liczba, numer wersji, migracja v1 → v2, zrzut szesnastkowy | zapisz v1 | zapisz v2 | wczytaj z migracją |
 | **12_Bezpieczny_zapis_Sloty** | 3 sloty, zapis atomowy (.tmp + File.Replace), kopia .bak, suma SHA-256, wykrywanie edycji pliku | zapisz | wczytaj | „oszukaj” (zmień złoto) |
+| **13_PlayerPrefs_Ustawienia** | ustawienia w PlayerPrefs: SetInt/SetFloat/SetString, bool/enum/kolor zamienione na int i tekst, wartości domyślne, HasKey, DeleteKey, Save, licznik wejść do sceny (trwałość po resecie), miejsce zapisu na platformie; A/D – wybór, W/S – zmiana | Save() | wczytaj | usuń klucze |
+| **14_PlayerPrefs_Rekordy_JSON** | tabela rekordów jako JSON w jednym kluczu, pole version, migracja ze starego formatu (osobne klucze) | zagraj rundę | stary format v1 + migracja | wyczyść tabelę |
 
+Klucze PlayerPrefs scen 13–14 (prefiksy `s13.`, `s14.`) w Windows: rejestr `HKEY_CURRENT_USER\Software\PGWSU\Serializacja_Demo` (w edytorze: `…\Software\Unity\UnityEditor\PGWSU\Serializacja_Demo`).
 Pliki zapisu scen 09, 11 i 12 trafiają do `Application.persistentDataPath` (w Windows: `%USERPROFILE%\AppData\LocalLow\PGWSU\Serializacja_Demo`).
 
 ---
@@ -85,9 +88,10 @@ Assets/
   Settings/                          ustawienia URP
   Serializacja/
     Scripts/Core/   DemoHud, DemoInput, DemoActionBase, WorldLabel, FreeCamera
-    Scripts/Demo/   skrypty scen 01–12 (SerializationRulesDemo, SerializableClassesDemo, SerializeReferenceDemo,
+    Scripts/Demo/   skrypty scen 01–14 (SerializationRulesDemo, SerializableClassesDemo, SerializeReferenceDemo,
                     SerializableDictionary, DictionaryDemo, EnemyType, Enemy, GameEventChannel, FloatVariable,
-                    CloneProbe, YamlViewer, SaveData, SaveGameDemo, JsonLimitsDemo, BinarySaveDemo, SecureSaveDemo …)
+                    CloneProbe, YamlViewer, SaveData, SaveGameDemo, JsonLimitsDemo, BinarySaveDemo, SecureSaveDemo,
+                    PrefsUtil, PlayerPrefsSettingsDemo, HighScoresDemo …)
     Editor/         generator scen (SceneBuilder, SceneDefinitions), panel scen, pierwsze uruchomienie
     Scenes/ Data/ Materials/ Textures/   (tworzone przez generator)
 Narzedzia/          skrypty .bat: otwarcie projektu, generowanie scen, build Windows
